@@ -1,5 +1,3 @@
-
-import {auth} from "@/auth";
 import {Button} from "@/components/ui/button";
 import ROUTES from "@/constants/routes";
 import Link from "next/link";
