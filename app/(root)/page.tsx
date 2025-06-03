@@ -3,6 +3,7 @@ import ROUTES from "@/constants/routes";
 import Link from "next/link";
 import LocalSearch from "@/components/search/LocalSearch";
 import HomeFilter from "@/components/filters/HomeFilter";
+import QuestionCard from "@/components/cards/QuestionCard";
 
 interface SearchParams {
     searchParams: Promise<{ [key: string]: string }>;
@@ -18,7 +19,7 @@ const Home = async ({ searchParams }: SearchParams) => {
                 {_id: "1", name: "React"},
                 {_id: "2", name: "Javascript"},
             ],
-            author: {_id: "1", name: "John Doe"},
+            author: {_id: "1", name: "John Doe", image: "https://img.freepik.com/premium-vector/man-avatar-profile-picture-isolated-background-avatar-profile-picture-man_1293239-4841.jpg?semt=ais_hybrid&w=740"},
             upvotes: 10,
             answers: 5,
             views: 100,
@@ -29,11 +30,11 @@ const Home = async ({ searchParams }: SearchParams) => {
                 {_id: "1", name: "Javascript"},
                 {_id: "2", name: "React"},
             ],
-            author: {_id: "1", name: "John Doe"},
+            author: {_id: "1", name: "John Doe", image: "https://static.vecteezy.com/system/resources/previews/024/183/525/non_2x/avatar-of-a-man-portrait-of-a-young-guy-illustration-of-male-character-in-modern-color-style-vector.jpg"},
             upvotes: 10,
             answers: 5,
             views: 100,
-            createdAt: new Date(),
+            createdAt: new Date("2021-09-01"),
         }
     ]
 
@@ -73,7 +74,7 @@ const Home = async ({ searchParams }: SearchParams) => {
 
             <div className="mt-10 flex w-full flex-col gap-6">
                 {filteredQuestions.map((question) => (
-                    <h1 key={question._id}>{question.title}</h1>
+                    <QuestionCard key={question._id} question={question} />
                 ))}
             </div>
 
