@@ -2,7 +2,7 @@ import React from 'react'
 import Link from "next/link";
 import ROUTES from "@/constants/routes";
 import {Badge} from "@/components/ui/badge";
-import {getDeviconClassName} from "@/lib/utils";
+import {getDevIconClassName} from "@/lib/utils";
 import Image from "next/image";
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const TagCard = ({ _id, name, questions, showCount, compact, remove, isButton, handleRemove }: Props) => {
-    const iconClass = getDeviconClassName(name);
+    const iconClass = getDevIconClassName(name);
 
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
