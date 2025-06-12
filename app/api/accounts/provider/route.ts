@@ -6,6 +6,7 @@ import {NextResponse} from "next/server";
 import dbConnect from "@/lib/mongoose";
 import Account from "@/database/account.model";
 
+// POST api/accounts/provider
 export async function POST(request: Request) {
 
     const { providerAccountId } = await request.json();
