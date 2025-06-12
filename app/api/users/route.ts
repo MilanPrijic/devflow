@@ -6,6 +6,7 @@ import {NextResponse} from "next/server";
 import {UserSchema} from "@/lib/validaitons";
 import {ValidationError} from "@/lib/http.errors";
 
+// GET api/users
 export async function GET() {
     try {
         await dbConnect();
@@ -19,6 +20,7 @@ export async function GET() {
     }
 }
 
+// POST api/users
 export async function POST(request: Request) {
     try {
         await dbConnect();
