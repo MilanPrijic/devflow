@@ -2,7 +2,6 @@ import {ActionResponse} from "@/types/global";
 import {HeadersInit} from "undici-types";
 import logger from "@/lib/logger";
 import handleError from "@/lib/handlers/errors";
-import {clearTimeout} from "node:timers";
 import {RequestError} from "@/lib/http.errors";
 
 interface FetchOptions extends RequestInit {
