@@ -1,5 +1,4 @@
 import {ActionResponse} from "@/types/global";
-import {HeadersInit} from "undici-types";
 import logger from "@/lib/logger";
 import handleError from "@/lib/handlers/errors";
 import {RequestError} from "@/lib/http.errors";
