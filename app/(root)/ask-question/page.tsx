@@ -1,7 +1,14 @@
 import React from 'react'
 import QuestionForm from "@/components/forms/QuestionForm";
+import {auth} from "@/auth";
+import {redirect} from "next/navigation";
+import ROUTES from "@/constants/routes";
 
-const AskAQuestion = () => {
+const AskAQuestion = async () => {
+
+    const session = await auth();
+    if (!session) return redirect(ROUTES.SIGN_IN);
+    
     return (
         <>
             <h1 className="h1-bold text-dark100_light900">Ask a question</h1>
@@ -12,4 +19,4 @@ const AskAQuestion = () => {
         </>
     )
 }
-export default AskAQuestion
+export default AskAQuestion;

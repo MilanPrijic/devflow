@@ -27,7 +27,7 @@ const formatResponse = (
 
 const handleError = (error: unknown, responseType: ResponseType = 'server') => {
 
-    if (error instanceof  RequestError) {
+    if (error instanceof RequestError) {
 
         logger.error(
             { err: error },

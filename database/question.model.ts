@@ -13,7 +13,7 @@ export interface IQuestion {
 
 const QuestionSchema = new Schema<IQuestion>({
     title: { type: String, required: true, maxlength: 100 },
-    content: { type: String, required: true, maxLength: 600 },
+    content: { type: String, required: true, maxLength: 2000 },
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     answers: { type: Number, default: 0 },
     tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }],
