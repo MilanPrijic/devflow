@@ -14,6 +14,6 @@ const InteractionSchema = new Schema<IInteraction>({
     actionType: { type: String, enum: ["question", "answer"], required: true },
 }, { timestamps: true });
 
-const Interaction = models?.interaction || model<IInteraction>("interaction", InteractionSchema);
+const Interaction = models?.Interaction || model<IInteraction>("Interaction", InteractionSchema);
 
 export default Interaction;

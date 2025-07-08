@@ -10,6 +10,6 @@ const CollectionSchema = new Schema<ICollection>({
     question: { type: Schema.Types.ObjectId, ref: 'Question', required: true },
 }, { timestamps: true });
 
-const Collection = models?.collection || model<ICollection>("collection", CollectionSchema);
+const Collection = models?.Collection || model<ICollection>("Collection", CollectionSchema);
 
 export default Collection;

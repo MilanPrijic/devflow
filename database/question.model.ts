@@ -22,6 +22,6 @@ const QuestionSchema = new Schema<IQuestion>({
     views: { type: Number, default: 0 },
 }, { timestamps: true });
 
-const Question = models?.question || model<IQuestion>("question", QuestionSchema);
+const Question = models?.Question || model<IQuestion>("Question", QuestionSchema);
 
 export default Question;

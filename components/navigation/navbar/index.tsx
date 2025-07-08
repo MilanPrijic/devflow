@@ -3,8 +3,13 @@ import Link from "next/link";
 import Image from "next/image";
 import Theme from "@/components/navigation/navbar/Theme";
 import MobileNavigation from "@/components/navigation/navbar/MobileNavigation";
+import {auth} from "@/auth";
+import UserAvatar from "@/components/UserAvatar";
 
-const NavBar = () => {
+const NavBar = async () => {
+
+    const session = await auth();
+
     return (
         <nav className="flex-between background-light900_dark200 fixed z-50 w-full p-6 dark:shadow-none sm:px-12">
             <Link href="/" className="flex items-center gap-1">
@@ -17,7 +22,15 @@ const NavBar = () => {
             <p>Global Search</p>
 
             <div className="flex-between gap-5">
-                <Theme/>
+                <Theme />
+
+                { session?.user?.id && (
+                    <UserAvatar
+                        id={session.user.id}
+                        name={session.user.name!}
+                        imageUrl={session.user?.image}
+                    />
+                )}
 
                 <MobileNavigation/>
             </div>
