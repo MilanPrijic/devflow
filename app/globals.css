@@ -484,14 +484,19 @@
   }
 
   .markdown :where(p) {
+    margin-top: 2px;
     color: theme("colors.dark.500");
   }
 
   .markdown :where(ul) {
+    margin-top: 0;
+    margin-bottom: 0;
     color: theme("colors.dark.500");
   }
 
   .markdown :where(ol) {
+    margin-top: 0;
+    margin-bottom: 0;
     color: theme("colors.dark.500");
   }
 
