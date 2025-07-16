@@ -1,14 +1,10 @@
-import {ActionResponse, ErrorResponse, PaginatedSearchParams} from "@/types/global";
 import action from "@/lib/handlers/action";
 import {GetTagQuestionsSchema, PaginatedSearchParamsSchema} from "@/lib/validaitons";
 import handleError from "@/lib/handlers/errors";
 import {FilterQuery} from "mongoose";
-import Tag from "@/database/tag.model";
-import Question from "@/database/question.model";
-import {GetTagQuestionsParams} from "@/types/action";
+import { DTOQuestion, DTOTag } from "@/database";
 import {NotFoundError} from "@/lib/http.errors";
 
-// @ts-ignore
 export async function getTags(params: PaginatedSearchParams): Promise<ActionResponse<{ tags: Tag[], isNext: boolean }>> {
 
     const validationResult = await action({ params, schema: PaginatedSearchParamsSchema });
@@ -21,7 +17,7 @@ export async function getTags(params: PaginatedSearchParams): Promise<ActionResp
     const skip = (Number(page) - 1) * pageSize;
     const limit = Number(pageSize);
 
-    const filterQuery: FilterQuery<typeof Tag> = {};
+    const filterQuery: FilterQuery<typeof DTOTag> = {};
 
     if(filter === "recommended") return { success: true, data: { tags: [], isNext: false }, status: 200 };
 
@@ -52,9 +48,9 @@ export async function getTags(params: PaginatedSearchParams): Promise<ActionResp
     }
 
     try {
-        const totalTags = await Tag.countDocuments(filterQuery);
+        const totalTags = await DTOTag.countDocuments(filterQuery);
 
-        const tags = await Tag.find(filterQuery)
+        const tags = await DTOTag.find(filterQuery)
             .sort(sortCriteria)
             .skip(skip)
             .limit(limit);
@@ -87,13 +83,13 @@ export async function getTagQuestions(params: GetTagQuestionsParams): Promise<Ac
 
     try {
 
-        const tag = await Tag.findById(tagId);
+        const tag = await DTOTag.findById(tagId);
 
         if (!tag) {
             throw new NotFoundError('Tag');
         }
 
-        const filterQuery: FilterQuery<typeof Question> = {
+        const filterQuery: FilterQuery<typeof DTOQuestion> = {
             tags: { $in: [tagId] }
         };
 
@@ -101,9 +97,9 @@ export async function getTagQuestions(params: GetTagQuestionsParams): Promise<Ac
             filterQuery.title = { $regex: query, $options: 'i' };
         }
 
-        const totalQuestions = await Question.countDocuments(filterQuery);
+        const totalQuestions = await DTOQuestion.countDocuments(filterQuery);
 
-        const questions = await Question.find(filterQuery)
+        const questions = await DTOQuestion.find(filterQuery)
             .select('_id title views answers upvotes downvotes author createdAt')
             .populate([
                 { path: 'author', select: 'name image'},

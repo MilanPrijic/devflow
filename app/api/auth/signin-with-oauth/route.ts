@@ -1,6 +1,5 @@
 import dbConnect from "@/lib/mongoose";
 import mongoose from "mongoose";
-import {APIErrorResponse} from "@/types/global";
 import handleError from "@/lib/handlers/errors";
 import {SignInWithOAuthSchema} from "@/lib/validaitons";
 import {ValidationError} from "@/lib/http.errors";

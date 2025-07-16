@@ -16,7 +16,6 @@ import {toast} from "sonner";
 import {useRouter} from "next/navigation";
 import ROUTES from "@/constants/routes";
 import {ReloadIcon} from "@radix-ui/react-icons";
-import {Question} from "@/types/global";
 
 // This is the only place InitializedMDXEditor is imported directly.
 const Editor = dynamic(() => import('@/components/editor'), {

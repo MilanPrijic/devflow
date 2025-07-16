@@ -3,7 +3,6 @@ import QuestionForm from "@/components/forms/QuestionForm";
 import {auth} from "@/auth";
 import {notFound, redirect} from "next/navigation";
 import ROUTES from "@/constants/routes";
-import {RouteParams} from "@/types/global";
 import {getQuestion} from "@/lib/actions/question.action";
 
 const EditQuestion = async ({ params }: RouteParams) => {
@@ -17,7 +16,7 @@ const EditQuestion = async ({ params }: RouteParams) => {
     const { data: question, success } = await getQuestion({ questionId: id });
     if (!success) return notFound();
 
-    if(question?.author.toString() != session?.user?.id) redirect(ROUTES.QUESTION(id));
+    if(question?.author._id.toString() != session?.user?.id) redirect(ROUTES.QUESTION(id));
 
     return (
         <main>

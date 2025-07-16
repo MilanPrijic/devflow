@@ -9,13 +9,13 @@ import User from './user.model';
 import Vote from './vote.model';
 
 export {
-    Account,
-    Answer,
-    Collection,
-    Interaction,
-    Question,
-    TagQuestion,
-    Tag,
-    User,
-    Vote
+    Account as DTOAccount,
+    Answer as DTOAnswer,
+    Collection as DTOCollection,
+    Interaction as DTOInteraction,
+    Question as DTOQuestion,
+    TagQuestion as DTOTagQuestion,
+    Tag as DTOTag,
+    User as DTOUser,
+    Vote as DTOVote,
 }

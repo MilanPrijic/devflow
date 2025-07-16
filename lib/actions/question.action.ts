@@ -1,17 +1,19 @@
 "use server";
 
-import {AskQuestionSchema, EditQuestionSchema, GetQuestionSchema, PaginatedSearchParamsSchema} from "@/lib/validaitons";
-import {ActionResponse, ErrorResponse, PaginatedSearchParams} from "@/types/global";
+import {
+    AskQuestionSchema,
+    EditQuestionSchema,
+    GetQuestionSchema,
+    IncrementViewsSchema,
+    PaginatedSearchParamsSchema
+} from "@/lib/validaitons";
 import handleError from "@/lib/handlers/errors";
 import action from "@/lib/handlers/action";
 import mongoose, {FilterQuery} from "mongoose";
-import Question, {IQuestionDoc} from "@/database/question.model";
-import Tag, {ITagDoc} from "@/database/tag.model";
-import TagQuestion from "@/database/tag-question.model";
+import {ITagDoc} from "@/database/tag.model";
+import { DTOQuestion, DTOTag, DTOTagQuestion } from "@/database";
 import {NotFoundError, UnauthorizedError} from "@/lib/http.errors";
-import {CreateQuestionParams, EditQuestionParams, GetQuestionParams} from "@/types/action";
 
-// @ts-ignore
 export async function createQuestion(params: CreateQuestionParams): Promise<ActionResponse<Question>> {
 
     const validationResult = await action({ params, schema: AskQuestionSchema, authorize: true });
@@ -28,7 +30,7 @@ export async function createQuestion(params: CreateQuestionParams): Promise<Acti
     
     try {
 
-        const [question] = await Question.create(
+        const [question] = await DTOQuestion.create(
             [
                 {
                     title,
@@ -48,7 +50,7 @@ export async function createQuestion(params: CreateQuestionParams): Promise<Acti
 
         for (const tag of tags) {
 
-            const existingTag = await Tag.findOneAndUpdate({
+            const existingTag = await DTOTag.findOneAndUpdate({
                     name: {$regex: new RegExp(`^${tag}$`, 'i')} // search Tag where name is ^ - string beginning, tag, $ - string end, "i" - case-insensitive
                 },
                 { $setOnInsert: {name: tag}, $inc: {questions: 1} }, // if we do not find it, insert a new one and increment count of those questions by 1
@@ -63,9 +65,9 @@ export async function createQuestion(params: CreateQuestionParams): Promise<Acti
 
         }
 
-        await TagQuestion.insertMany(tagQuestionDocuments, { session });
+        await DTOTagQuestion.insertMany(tagQuestionDocuments, { session });
 
-        await Question.findByIdAndUpdate(
+        await DTOQuestion.findByIdAndUpdate(
             question._id,
             { $push: { tags: { $each: tagIds } } },
             { session}
@@ -84,7 +86,7 @@ export async function createQuestion(params: CreateQuestionParams): Promise<Acti
     }
 }
 
-export async function editQuestion(params: EditQuestionParams): Promise<ActionResponse<IQuestionDoc>> {
+export async function editQuestion(params: EditQuestionParams): Promise<ActionResponse<Question>> {
 
     const validationResult = await action({ params, schema: EditQuestionSchema, authorize: true });
 
@@ -100,7 +102,7 @@ export async function editQuestion(params: EditQuestionParams): Promise<ActionRe
 
     try {
 
-        const question = await Question.findById(questionId).populate('tags'); // populate means that question has tags id's, this populate will fetch tag data as well and deliver everything back
+        const question = await DTOQuestion.findById(questionId).populate('tags'); // populate means that question has tags id's, this populate will fetch tag data as well and deliver everything back
 
         if(!question) {
             throw new NotFoundError("Question");
@@ -133,7 +135,7 @@ export async function editQuestion(params: EditQuestionParams): Promise<ActionRe
         if(tagsToAdd.length > 0) {
             for (const tag of tagsToAdd) {
 
-                const existingTag = await Tag.findOneAndUpdate({
+                const existingTag = await DTOTag.findOneAndUpdate({
                         name: {$regex: `^${tag}$`, $options: 'i'} // search Tag where name is ^ - string beginning, tag, $ - string end, "i" - case-insensitive
                     },
                     {$setOnInsert: {name: tag}, $inc: {questions: 1}}, // if we do not find it, insert a new one and increment count of those questions by 1
@@ -154,13 +156,13 @@ export async function editQuestion(params: EditQuestionParams): Promise<ActionRe
         if(tagsToRemove.length > 0) {
             const tagIdsToRemove = tagsToRemove.map((tag: ITagDoc) => tag._id);
 
-            await Tag.updateMany(
+            await DTOTag.updateMany(
                 { _id: { $in: tagIdsToRemove } },
                 { $inc: { questions: -1 } },
                 { session }
             );
 
-            await TagQuestion.deleteMany(
+            await DTOTagQuestion.deleteMany(
                 { tag: { $in: tagIdsToRemove }, question: questionId },
                 { session }
             );
@@ -174,7 +176,7 @@ export async function editQuestion(params: EditQuestionParams): Promise<ActionRe
         }
 
         if(newTagDocuments.length > 0) {
-            await TagQuestion.insertMany(newTagDocuments, { session });
+            await DTOTagQuestion.insertMany(newTagDocuments, { session });
         }
 
         await question.save({ session });
@@ -190,7 +192,6 @@ export async function editQuestion(params: EditQuestionParams): Promise<ActionRe
     }
 }
 
-// @ts-ignore
 export async function getQuestion(params: GetQuestionParams): Promise<ActionResponse<Question>> {
 
     const validationResult = await action({params, schema: GetQuestionSchema, authorize: true});
@@ -202,7 +203,7 @@ export async function getQuestion(params: GetQuestionParams): Promise<ActionResp
     const { questionId } = validationResult.params!;
 
     try {
-        const question = await Question.findById(questionId)
+        const question = await DTOQuestion.findById(questionId)
             .populate('tags')
             .populate('author', "_id name image")
         ;
@@ -219,8 +220,8 @@ export async function getQuestion(params: GetQuestionParams): Promise<ActionResp
 
 }
 
-// @ts-ignore
 export async function getQuestions(params: PaginatedSearchParams): Promise<ActionResponse<{ questions: Question[], isNext: boolean}>> {
+
     const validatedResult = await action({ params, schema: PaginatedSearchParamsSchema });
 
     if (validatedResult instanceof Error) {
@@ -231,7 +232,7 @@ export async function getQuestions(params: PaginatedSearchParams): Promise<Actio
     const skip = (Number(page) - 1) * pageSize;
     const limit = Number(pageSize);
 
-    const filterQuery: FilterQuery<typeof Question> = {};
+    const filterQuery: FilterQuery<typeof DTOQuestion> = {};
 
     if(filter === "recommended") return { success: true, data: { questions: [], isNext: false }, status: 200 };
 
@@ -261,9 +262,9 @@ export async function getQuestions(params: PaginatedSearchParams): Promise<Actio
     }
 
     try {
-        const totalQuestion = await Question.countDocuments(filterQuery);
+        const totalQuestion = await DTOQuestion.countDocuments(filterQuery);
 
-        const question = await Question.find(filterQuery)
+        const question = await DTOQuestion.find(filterQuery)
             .populate('tags', 'name')
             .populate('author', 'name image')
             .lean()
@@ -278,6 +279,35 @@ export async function getQuestions(params: PaginatedSearchParams): Promise<Actio
             data: { questions: JSON.parse(JSON.stringify(question)), isNext },
             status: 200
         }
+
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
+
+}
+
+export async function incrementViews(params: IncrementViewsParams): Promise<ActionResponse<{ views: number }>> {
+
+    const validatedResult = await action({ params, schema: IncrementViewsSchema });
+
+    if (validatedResult instanceof Error) {
+        return handleError(validatedResult) as ErrorResponse;
+    }
+
+    const { questionId } = validatedResult.params!;
+
+    try {
+        const question = await DTOQuestion.findById(questionId);
+
+        if(!question) {
+            throw new NotFoundError("Question");
+        }
+
+        question.views += 1;
+
+        await question.save();
+
+        return { success: true, data: { views: question.views }, status: 200 }
 
     } catch (error) {
         return handleError(error) as ErrorResponse;

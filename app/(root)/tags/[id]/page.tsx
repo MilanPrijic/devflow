@@ -1,5 +1,4 @@
 import React from 'react'
-import {RouteParams} from "@/types/global";
 import {getTagQuestions} from "@/lib/actions/tag.action";
 import ROUTES from "@/constants/routes";
 import LocalSearch from "@/components/search/LocalSearch";

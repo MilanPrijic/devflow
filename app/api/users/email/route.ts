@@ -1,4 +1,3 @@
-import {APIErrorResponse} from "@/types/global";
 import {UserSchema} from "@/lib/validaitons";
 import {NotFoundError, ValidationError} from "@/lib/http.errors";
 import handleError from "@/lib/handlers/errors";

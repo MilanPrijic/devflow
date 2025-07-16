@@ -488,6 +488,11 @@
     color: theme("colors.dark.500");
   }
 
+  .markdown :where(a, code) {
+    padding: 2px;
+    color: #FF7000;
+  }
+
   .markdown :where(ul) {
     margin-top: 0;
     margin-bottom: 0;

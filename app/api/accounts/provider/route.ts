@@ -1,4 +1,4 @@
-import {APIErrorResponse} from "@/types/global";
+
 import {AccountSchema} from "@/lib/validaitons";
 import {NotFoundError, ValidationError} from "@/lib/http.errors";
 import handleError from "@/lib/handlers/errors";

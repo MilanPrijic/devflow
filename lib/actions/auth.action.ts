@@ -1,16 +1,13 @@
 "use server";
 
-import {ActionResponse, ErrorResponse} from "@/types/global";
 import action from "@/lib/handlers/action";
 import {SignInSchema, SignUpSchema} from "@/lib/validaitons";
 import handleError from "@/lib/handlers/errors";
 import mongoose from "mongoose";
-import User from "@/database/user.model";
+import { DTOUser, DTOAccount } from "@/database";
 import bcrypt from "bcryptjs";
-import Account from "@/database/account.model";
 import {signIn} from "@/auth";
 import {NotFoundError} from "@/lib/http.errors";
-import {AuthCredentials} from "@/types/action";
 
 export async function signUpWithCredentials(params: AuthCredentials): Promise<ActionResponse> {
 
@@ -26,13 +23,13 @@ export async function signUpWithCredentials(params: AuthCredentials): Promise<Ac
     session.startTransaction();
 
     try {
-        const existingUser = await User.findOne({ email }).session(session);
+        const existingUser = await DTOUser.findOne({ email }).session(session);
 
         if (existingUser) {
             throw new Error("User already exists");
         }
 
-        const existingUsername = await User.findOne({ username }).session(session);
+        const existingUsername = await DTOUser.findOne({ username }).session(session);
 
         if (existingUsername) {
             throw new Error("Username already exists");
@@ -40,14 +37,14 @@ export async function signUpWithCredentials(params: AuthCredentials): Promise<Ac
 
         const hashedPassword = await bcrypt.hash(password, 12);
 
-        const [newUser] = await User.create(
+        const [newUser] = await DTOUser.create(
             [
                 { username, name, email }
             ],
             { session }
         );
 
-        await Account.create(
+        await DTOAccount.create(
             [
                 {
                     userId: newUser._id,
@@ -85,13 +82,13 @@ export async function signInWithCredentials(params: Pick<AuthCredentials, 'email
     const { email, password } = validationResult.params!;
 
     try {
-        const existingUser = await User.findOne({ email });
+        const existingUser = await DTOUser.findOne({ email });
 
         if (!existingUser) {
             throw new NotFoundError('User');
         }
 
-        const existingAccount = await Account.findOne({ provider: 'credentials', providerAccountId: email });
+        const existingAccount = await DTOAccount.findOne({ provider: 'credentials', providerAccountId: email });
 
         if (!existingAccount) {
             throw new NotFoundError('Account');

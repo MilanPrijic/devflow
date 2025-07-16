@@ -2,7 +2,6 @@ import NextAuth from "next-auth"
 import GitHub from "@auth/core/providers/github";
 import Google from "@auth/core/providers/google";
 import {api} from "@/lib/api";
-import {ActionResponse} from "@/types/global";
 import {IAccountDoc} from "@/database/account.model";
 import {IUserDoc} from "@/database/user.model";
 import {SignInSchema} from "@/lib/validaitons";

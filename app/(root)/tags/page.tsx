@@ -1,6 +1,5 @@
 import React from 'react'
 import {getTags} from "@/lib/actions/tag.action";
-import {RouteParams} from "@/types/global";
 import LocalSearch from "@/components/search/LocalSearch";
 import ROUTES from "@/constants/routes";
 import DataRenderer from "@/components/DataRenderer";
