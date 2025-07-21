@@ -78,9 +78,11 @@ const AnswerForm = ({ questionId, questionTitle, questionContent }: Props) => {
 
         setIsAISubmitting(true);
 
+        const userAnswer = editorRef.current?.getMarkdown();
+
         try {
 
-            const { success, data, error } = await api.ai.getAnswer(questionTitle, questionContent);
+            const { success, data, error } = await api.ai.getAnswer(questionTitle, questionContent, userAnswer);
 
             if (!success) {
                 throw new RequestError(error?.message);
@@ -139,7 +141,7 @@ const AnswerForm = ({ questionId, questionTitle, questionContent }: Props) => {
                                 <FormControl>
                                     <Editor
                                         value={field.value}
-                                        editorRef={editorRef}
+                                        ref={editorRef}
                                         fieldChange={field.onChange}
                                     />
                                 </FormControl>
