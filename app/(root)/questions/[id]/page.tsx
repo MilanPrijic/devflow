@@ -14,11 +14,13 @@ import {getAnswers} from "@/lib/actions/answer.action";
 import AllAnswers from "@/components/answers/AllAnswers";
 import Votes from "@/components/votes/Votes";
 import {hasVoted} from "@/lib/actions/vote.action";
+import SaveQuestions from "@/components/questions/SaveQuestions";
+import {hasSavedQuestion} from "@/lib/actions/collection.action";
 
-const QuestionDetails = async ({ params }: RouteParams) => {
+const QuestionDetails = async ({ params, searchParams }: RouteParams) => {
 
     const { id } = await params;
-
+    const { page, pageSize, filter } = await searchParams;
     const { success, data: question } = await getQuestion({
         questionId: id
     });
@@ -35,12 +37,16 @@ const QuestionDetails = async ({ params }: RouteParams) => {
         error: answersError
     } = await getAnswers({
         questionId: id,
-        page: 1,
-        pageSize: 10,
-        filter: 'latest'
+        page: Number(page) | 1,
+        pageSize: Number(pageSize) | 10,
+        filter: filter
     });
 
     const hasVotedPromise = hasVoted({ targetId: question._id, targetType: "question" });
+
+    const hasSavedQuestionPromise = hasSavedQuestion({
+        questionId: question._id,
+    });
 
     const { author, createdAt, answers, views, tags, content, title } = question;
 
@@ -63,7 +69,7 @@ const QuestionDetails = async ({ params }: RouteParams) => {
                         </Link>
                     </div>
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-end items-center gap-4">
                         <Suspense fallback={<div>Loading...</div>}>
                             <Votes
                                 upvotes={question.upvotes}
@@ -71,6 +77,13 @@ const QuestionDetails = async ({ params }: RouteParams) => {
                                 targetType="question"
                                 targetId={question._id}
                                 hasVotedPromise={hasVotedPromise}
+                            />
+                        </Suspense>
+
+                        <Suspense fallback={<div>Loading...</div>}>
+                            <SaveQuestions
+                                questionId={question._id}
+                                hasSavedQuestionPromise={hasSavedQuestionPromise}
                             />
                         </Suspense>
                     </div>
@@ -119,6 +132,8 @@ const QuestionDetails = async ({ params }: RouteParams) => {
 
             <section className="my-5">
                 <AllAnswers
+                    page={Number(page) | 1}
+                    isNext={answersResult?.isNext || false}
                     data={answersResult?.answers}
                     success={areAnswersLoaded}
                     error={answersError}

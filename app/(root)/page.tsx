@@ -7,6 +7,9 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import {getQuestions} from "@/lib/actions/question.action";
 import DataRenderer from "@/components/DataRenderer";
 import {EMPTY_QUESTION} from "@/constants/states";
+import CommonFilter from "@/components/filters/CommonFilter";
+import {HomePageFilters} from "@/constants/filters";
+import Pagination from "@/components/Pagination";
 
 interface SearchParams {
     searchParams: Promise<{ [key: string]: string }>;
@@ -23,7 +26,7 @@ const Home = async ({ searchParams }: SearchParams) => {
         filter: filter || ""
     });
 
-    const { questions } = data || {};
+    const { questions, isNext } = data || {};
 
     return (
         <>
@@ -38,14 +41,21 @@ const Home = async ({ searchParams }: SearchParams) => {
 
             </section>
 
-            <section className="mt-11">
+            <div className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
                 <LocalSearch
                     route="/"
                     imgSrc="/icons/search.svg"
                     placeholder="Search questions..."
                     otherClasses="flex-1"
                 />
-            </section>
+
+                <CommonFilter
+                    filters={HomePageFilters}
+                    otherClasses="min-h-[56px] w-full sm:min-w-[170px]"
+                    containerClasses="hidden max-md:flex"
+                />
+
+            </div>
 
             <HomeFilter />
 
@@ -62,6 +72,8 @@ const Home = async ({ searchParams }: SearchParams) => {
                     </div>
                 )}
             />
+
+            <Pagination page={page} isNext={isNext || false} />
         </>
   );
 }

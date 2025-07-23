@@ -4,6 +4,7 @@ import handleError from "@/lib/handlers/errors";
 import {FilterQuery} from "mongoose";
 import { DTOQuestion, DTOTag } from "@/database";
 import {NotFoundError} from "@/lib/http.errors";
+import dbConnect from "@/lib/mongoose";
 
 export async function getTags(params: PaginatedSearchParams): Promise<ActionResponse<{ tags: Tag[], isNext: boolean }>> {
 
@@ -40,7 +41,7 @@ export async function getTags(params: PaginatedSearchParams): Promise<ActionResp
             sortCriteria = { createdAt: 1 };
             break;
         case "name":
-            sortCriteria = { name: -1 };
+            sortCriteria = { name: 1 };
             break;
         case "default":
             sortCriteria = { questions: -1 };
@@ -68,7 +69,6 @@ export async function getTags(params: PaginatedSearchParams): Promise<ActionResp
     }
 }
 
-// @ts-ignore
 export async function getTagQuestions(params: GetTagQuestionsParams): Promise<ActionResponse<{ tag: Tag, questions: Question[], isNext: boolean }>> {
 
     const validationResult = await action({ params, schema: GetTagQuestionsSchema });
@@ -113,6 +113,27 @@ export async function getTagQuestions(params: GetTagQuestionsParams): Promise<Ac
         return {
             success: true,
             data: { tag: JSON.parse(JSON.stringify(tag)), questions: JSON.parse(JSON.stringify(questions)), isNext },
+            status: 200
+        }
+
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
+}
+
+export async function getTopTags(): Promise<ActionResponse<Tag[]>> {
+
+    try {
+
+        await dbConnect();
+
+        const tags = await DTOTag.find()
+            .sort({ questions: -1 })
+            .limit(5);
+
+        return {
+            success: true,
+            data: JSON.parse(JSON.stringify(tags)),
             status: 200
         }
 

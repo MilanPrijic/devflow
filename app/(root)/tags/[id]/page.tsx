@@ -5,8 +5,11 @@ import LocalSearch from "@/components/search/LocalSearch";
 import DataRenderer from "@/components/DataRenderer";
 import {EMPTY_QUESTION} from "@/constants/states";
 import QuestionCard from "@/components/cards/QuestionCard";
+import {TagFilters} from "@/constants/filters";
+import CommonFilter from "@/components/filters/CommonFilter";
+import Pagination from "@/components/Pagination";
 
-const TagDetailes = async ({ params, searchParams }: RouteParams) => {
+const TagDetails = async ({ params, searchParams }: RouteParams) => {
 
     const { id } = await params;
     const { page, pageSize, query } = await searchParams;
@@ -18,7 +21,7 @@ const TagDetailes = async ({ params, searchParams }: RouteParams) => {
         query: query
     });
 
-    const { tag, questions } = data || {};
+    const { tag, questions, isNext } = data || {};
 
     return (
         <>
@@ -26,14 +29,17 @@ const TagDetailes = async ({ params, searchParams }: RouteParams) => {
                 <h1 className='h1-bold text-dark100_light900'>{tag?.name}</h1>
             </section>
 
-            <section className="mt-11">
+            <div className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
                 <LocalSearch
                     route={ROUTES.TAG(id)}
                     imgSrc="/icons/search.svg"
                     placeholder="Search questions..."
                     otherClasses="flex-1"
                 />
-            </section>
+
+                <CommonFilter filters={TagFilters} otherClasses="min-h-[56px] w-full sm:min-w-[170px]" />
+
+            </div>
 
             <DataRenderer
                 success={success}
@@ -48,7 +54,10 @@ const TagDetailes = async ({ params, searchParams }: RouteParams) => {
                     </div>
                 )}
             />
+
+            <Pagination page={page} isNext={isNext || false} />
+
         </>
     )
 }
-export default TagDetailes;
+export default TagDetails;
