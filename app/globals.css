@@ -577,6 +577,10 @@
     color: theme("colors.light.700");
   }
 
+  .text-link-100 {
+    color: theme("colors.link.100");
+  }
+
   /* Tab utilities */
   .tab {
     min-height:       100%;
@@ -595,6 +599,7 @@
 
   .dark .tab[data-state=active] {
     background-color: theme("colors.dark.300");
+    color:            theme("colors.primary.500");
   }
 }
 
@@ -613,6 +618,7 @@
   --color-light-800: #F4F6F8;
   --color-light-850: #FDFDFD;
   --color-light-900: #FFFFFF;
+  --color-link-100: #1DE1F2;
   /* Border Radius */
   --radius-2: 8px;
   --radius-1-5: 6px;
