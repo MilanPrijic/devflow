@@ -6,11 +6,12 @@ import {
     GetUserAnswersSchema,
     GetUserQuestionsSchema,
     GetUserSchema, GetUserTagsSchema,
-    PaginatedSearchParamsSchema
+    PaginatedSearchParamsSchema, UpdateUserSchema
 } from "@/lib/validaitons";
 import {FilterQuery, PipelineStage, Types} from "mongoose";
-import {DTOAnswer, DTOQuestion, DTOTag, DTOUser} from "@/database";
+import {DTOAnswer, DTOQuestion, DTOUser} from "@/database";
 import {NotFoundError} from "@/lib/http.errors";
+import {assignBadges} from "@/lib/utils";
 
 export async function getUsers(params: PaginatedSearchParams): Promise<ActionResponse<{ users: User[], isNext: boolean }>> {
 
@@ -79,7 +80,7 @@ export async function getUsers(params: PaginatedSearchParams): Promise<ActionRes
     }
 }
 
-export async function getUser(params: GetUserParams): Promise<ActionResponse<{ user: User, totalQuestions: number, totalAnswers: number }>> {
+export async function getUser(params: GetUserParams): Promise<ActionResponse<{ user: User }>> {
 
     const validationResult = await action({
         params,
@@ -96,15 +97,10 @@ export async function getUser(params: GetUserParams): Promise<ActionResponse<{ u
 
         if (!user) throw new NotFoundError("User");
 
-        const totalQuestions = await DTOQuestion.countDocuments({ author: userId });
-        const totalAnswers = await DTOAnswer.countDocuments({ author: userId });
-
         return {
             success: true,
             data: {
-                user: JSON.parse(JSON.stringify(user)),
-                totalQuestions,
-                totalAnswers,
+                user: JSON.parse(JSON.stringify(user))
             },
             status: 200
         }
@@ -113,6 +109,70 @@ export async function getUser(params: GetUserParams): Promise<ActionResponse<{ u
         return handleError(error) as ErrorResponse;
     }
 
+}
+
+export async function getUserStats(params: GetUserParams): Promise<ActionResponse<{ totalQuestions: number; totalAnswers: number; badges: Badges; }>> {
+
+    const validationResult = await action({
+        params,
+        schema: GetUserSchema,
+    });
+
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
+    }
+
+    const { userId } = params;
+
+    try {
+
+        const [questionStats] = await DTOQuestion.aggregate([
+            { $match: { author: new Types.ObjectId(userId) } },
+            {
+                $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    upvotes: { $sum: "$upvotes" },
+                    views: { $sum: "$views" },
+                },
+            },
+        ]);
+
+        const [answerStats] = await DTOAnswer.aggregate([
+            { $match: { author: new Types.ObjectId(userId) } },
+            {
+                $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    upvotes: { $sum: "$upvotes" },
+                },
+            },
+        ]);
+
+        const badges = assignBadges({
+            criteria: [
+                { type: "ANSWER_COUNT", count: answerStats?.count || 0 },
+                { type: "QUESTION_COUNT", count: questionStats?.count || 0 },
+                {
+                    type: "QUESTION_UPVOTES",
+                    count: questionStats?.upvotes || 0 + answerStats?.upvotes || 0,
+                },
+                { type: "TOTAL_VIEWS", count: questionStats?.views || 0 },
+            ],
+        });
+
+        return {
+            success: true,
+            data: {
+                totalQuestions: questionStats?.count || 0,
+                totalAnswers: answerStats?.count || 0,
+                badges,
+            },
+            status: 200
+        };
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
 }
 
 export async function getUserQuestions(params: GetUserQuestionsParams): Promise<ActionResponse<{ questions: Question[], isNext: boolean }>> {
@@ -239,4 +299,34 @@ export async function getUserTopTags(params: GetUserTagsParams): Promise<ActionR
         return handleError(error) as ErrorResponse;
     }
 
+}
+
+export async function updateUser(params: UpdateUserParams): Promise<ActionResponse<{ user: User }>> {
+
+    const validationResult = await action({
+        params,
+        schema: UpdateUserSchema,
+        authorize: true,
+    });
+
+    if (validationResult instanceof Error) {
+        return handleError(validationResult) as ErrorResponse;
+    }
+
+    const { user } = validationResult.session!;
+
+    try {
+        const updatedUser = await DTOUser.findByIdAndUpdate(user?.id, params, {
+            new: true,
+        });
+
+        return {
+            success: true,
+            data: { user: JSON.parse(JSON.stringify(updatedUser)) },
+            status: 200
+        };
+
+    } catch (error) {
+        return handleError(error) as ErrorResponse;
+    }
 }

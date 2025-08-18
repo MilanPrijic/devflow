@@ -8,6 +8,8 @@ import mongoose, {ClientSession} from "mongoose";
 import {DTOAnswer, DTOQuestion, DTOVote} from "@/database";
 import {revalidatePath} from "next/cache";
 import ROUTES from "@/constants/routes";
+import {after} from "next/server";
+import {createInteraction} from "@/lib/actions/interaction.action";
 
 export async function updateVoteCount(params: UpdateVoteCountParams, session?: ClientSession): Promise<ActionResponse> {
 
@@ -20,6 +22,8 @@ export async function updateVoteCount(params: UpdateVoteCountParams, session?: C
     if (validationResult instanceof Error) {
         return handleError(validationResult) as ErrorResponse;
     }
+
+
 
     const {targetId, targetType, voteType, change } = validationResult.params!;
 
@@ -70,6 +74,13 @@ export async function createVote(params: CreateVoteParams): Promise<ActionRespon
 
     try {
 
+        const Model = targetType === "question" ? DTOQuestion : DTOAnswer;
+
+        const contentDoc = await Model.findById(targetId).session(session);
+        if (!contentDoc) throw new Error("Content not found");
+
+        const contentAuthorId = contentDoc.author.toString();
+
         const existingVote = await DTOVote.findOne({
             author: userId,
             actionId: targetId,
@@ -106,6 +117,15 @@ export async function createVote(params: CreateVoteParams): Promise<ActionRespon
             )
             await updateVoteCount({targetId, targetType, voteType, change: 1}, session);
         }
+
+        after(async () => {
+            await createInteraction({
+                action: voteType,
+                actionId: targetId,
+                actionTarget: targetType,
+                authorId: contentAuthorId,
+            });
+        });
 
         await session.commitTransaction();
 

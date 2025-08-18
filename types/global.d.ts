@@ -75,7 +75,7 @@ interface User {
     bio?: string;
     image?: string;
     location?: string;
-    protfolio?: string;
+    portfolio?: string;
     reputation?: number;
     createdAt: Date;
 }
@@ -86,8 +86,21 @@ interface Collection {
     question: Question;
 }
 
-interface BadgeCounts {
+interface Badges {
     GOLD: number;
     SILVER: number;
     BRONZE: number;
+}
+
+interface Interaction {
+    userId: string;
+    action: string;
+    actionId: string;
+    actionType: string;
+}
+
+interface GlobalSearchedItem {
+    id: string;
+    type: "question" | "answer" | "user" | "tag";
+    title: string;
 }

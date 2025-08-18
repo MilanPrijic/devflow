@@ -35,7 +35,7 @@ const RightSidebar = async () => {
                                         width={20}
                                         height={20}
                                     />
-                                    <p className="body-medium text-dark500_light700 line-clamp-2 pe-7 ps-3">{title}</p>
+                                    <p className="body-medium text-dark500_light700 w-full line-clamp-2 pe-7 ps-3">{title}</p>
                                     <Image src="/icons/chevron-right.svg" alt="Chevron" width={20} height={20} className="invert-colors" />
                                 </Link>
                             ))}

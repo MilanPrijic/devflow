@@ -11,14 +11,12 @@ const SocialAuthForm = () => {
     const buttonClass = "background-dark400_light900 body-medium text-dark-200_light800 min-h-12 flex-1 rounded-2 px-4 py-3.5"
 
     const handleSignIn = async (provider: "github" | "google") => {
-        console.log("handleSignIn");
         try {
             await signIn(provider, {
                 redirectTo: ROUTES.HOME,
                 redirect: false,
             });
         } catch (error) {
-            console.log(error);
             toast.error(error instanceof Error ? error.message : "An error occurred during sing-in");
         }
     };

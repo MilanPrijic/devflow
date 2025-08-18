@@ -31,10 +31,11 @@ import '@mdxeditor/editor/style.css'
 import { basicDark } from "cm6-theme-basic-dark";
 import "./dark-editor.css";
 import {useTheme} from "next-themes";
-import {forwardRef} from "react";
+import {forwardRef, Ref} from "react";
 
 interface Props {
     value: string;
+    editorRef: Ref<MDXEditorMethods> | null;
     fieldChange: (value: string) => void;
 }
 

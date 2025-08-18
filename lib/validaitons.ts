@@ -1,4 +1,5 @@
 import { z } from "zod";
+import {InteractionActionEnums} from "@/database/interaction.model";
 
 export const SignInSchema = z.object({
     email: z
@@ -76,7 +77,7 @@ export const UserSchema = z.object({
     bio: z.string().optional(),
     image: z.string().url({ message: "Please provide a valid URL." }).optional(),
     location: z.string().optional(),
-    protfolio: z.string().url({ message: "Please provide a valid URL address." }).optional(),
+    portfolio: z.string().url({ message: "Please provide a valid URL address." }).optional(),
     reputation: z.string().optional(),
 });
 
@@ -192,3 +193,57 @@ export const GetUserAnswersSchema = PaginatedSearchParamsSchema.extend({
 export const GetUserTagsSchema = z.object({
     userId: z.string().min(1, { message: "User ID is required" }),
 })
+
+export const DeleteQuestionSchema = z.object({
+    questionId: z.string().min(1, { message: "Question ID is required" }),
+})
+
+export const DeleteAnswerSchema = z.object({
+    answerId: z.string().min(1, { message: "Question ID is required" }),
+})
+
+export const CreateInteractionSchema = z.object({
+    action: z.enum(InteractionActionEnums),
+    actionTarget: z.enum(["question", "answer"], { message: "Action target is required" }),
+    actionId: z.string().min(1, { message: "Action ID is required" }),
+    authorId: z.string().min(1, { message: "Author ID is required" }),
+})
+
+export const GlobalSearchSchema = z.object({
+    query: z.string(),
+    type: z.string().nullable().optional(),
+});
+
+export const ProfileSchema = z.object({
+    name: z
+        .string()
+        .min(3, {
+            message: "Name must be at least 3 characters.",
+        })
+        .max(130, { message: "Name musn't be longer then 130 characters." }),
+    username: z
+        .string()
+        .min(3, { message: "username musn't be longer then 100 characters." }),
+    portfolio: z.string().url({ message: "Please provide valid URL" }),
+    location: z.string().min(3, { message: "Please provide proper location" }),
+    bio: z.string().min(3, {
+        message: "Bio must be at least 3 characters.",
+    }),
+});
+
+export const UpdateUserSchema = z.object({
+    name: z
+        .string()
+        .min(3, {
+            message: "Name must be at least 3 characters.",
+        })
+        .max(130, { message: "Name musn't be longer then 130 characters." }),
+    username: z
+        .string()
+        .min(3, { message: "username musn't be longer then 100 characters." }),
+    portfolio: z.string().url({ message: "Please provide valid URL" }).optional(),
+    location: z.string().min(3, { message: "Please provide proper location" }),
+    bio: z.string().min(3, {
+        message: "Bio must be at least 3 characters.",
+    }),
+});

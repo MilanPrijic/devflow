@@ -1,5 +1,5 @@
 import React from 'react'
-import {getUser, getUserAnswers, getUserQuestions, getUserTopTags} from "@/lib/actions/user.action";
+import {getUser, getUserAnswers, getUserQuestions, getUserStats, getUserTopTags} from "@/lib/actions/user.action";
 import {notFound} from "next/navigation";
 import {auth} from "@/auth";
 import UserAvatar from "@/components/UserAvatar";
@@ -34,7 +34,9 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
         </div>
     );
 
-    const { user, totalQuestions, totalAnswers } = data!;
+    const { user } = data!;
+
+    const { data: userStats } = await getUserStats({ userId: id });
 
     const {
         success: userQuestionsSuccess,
@@ -84,10 +86,10 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
                         <p className="paragraph-regular text-dark200_light800">@{user.username}</p>
 
                         <div className="mt-5 flex flex-wrap items-center justify-start gap-5">
-                            {user.protfolio &&
+                            {user.portfolio &&
                                 <ProfileLink
                                     imgUrl="/icons/link.svg"
-                                    href={user.protfolio}
+                                    href={user.portfolio}
                                     title="Portfolio"
                                 />
                             }
@@ -124,13 +126,10 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
             </section>
 
             <Stats
-                totalQuestions={totalQuestions}
-                totalAnswers={totalAnswers}
-                badges={{
-                    GOLD: 0,
-                    SILVER: 0,
-                    BRONZE: 0
-                }}
+                totalQuestions={ userStats?.totalQuestions || 0 }
+                totalAnswers={ userStats?.totalAnswers || 0 }
+                badges={ userStats?.badges || { GOLD: 0, SILVER: 0, BRONZE: 0 }}
+                reputationPoints={user.reputation || 0}
             />
 
             <section className="mt-10 flex gap-10">
@@ -148,7 +147,11 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
                             render={(questions) =>
                                 <div className="flex w-full flex-col gap-6">
                                     {questions.map((question) => (
-                                        <QuestionCard key={question._id} question={question} />
+                                        <QuestionCard
+                                            key={question._id}
+                                            question={question}
+                                            showActionBtns={loggedInUser?.user?.id === question.author._id }
+                                        />
                                     ))}
                                 </div>
                             }
@@ -163,7 +166,7 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
                             empty={EMPTY_ANSWERS}
                             error={userAnswersError}
                             render={(answers) =>
-                                <div className="flex w-full flex-col gap-6">
+                                <div className="flex w-full flex-col gap-10">
                                     {answers.map((answer) => (
                                         <AnswerCard
                                             key={answer._id}
@@ -171,6 +174,7 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
                                             content={answer.content.slice(0, 27)}
                                             containerClasses="card-wrapper rounded-[10px] px-7 py-9 sm:px-11"
                                             showReadMore
+                                            showActionBtns={loggedInUser?.user?.id === answer.author._id}
                                         />
                                     ))}
                                 </div>

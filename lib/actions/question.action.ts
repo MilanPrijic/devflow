@@ -2,6 +2,7 @@
 
 import {
     AskQuestionSchema,
+    DeleteQuestionSchema,
     EditQuestionSchema,
     GetQuestionSchema,
     IncrementViewsSchema,
@@ -9,11 +10,16 @@ import {
 } from "@/lib/validaitons";
 import handleError from "@/lib/handlers/errors";
 import action from "@/lib/handlers/action";
-import mongoose, {FilterQuery} from "mongoose";
+import mongoose, {FilterQuery, Types} from "mongoose";
 import {ITagDoc} from "@/database/tag.model";
-import { DTOQuestion, DTOTag, DTOTagQuestion } from "@/database";
+import {DTOAnswer, DTOCollection, DTOInteraction, DTOQuestion, DTOTag, DTOTagQuestion, DTOVote} from "@/database";
 import {NotFoundError, UnauthorizedError} from "@/lib/http.errors";
 import dbConnect from "@/lib/mongoose";
+import {revalidatePath} from "next/cache";
+import ROUTES from "@/constants/routes";
+import {after} from "next/server";
+import {createInteraction} from "@/lib/actions/interaction.action";
+import { auth } from "@/auth";
 
 export async function createQuestion(params: CreateQuestionParams): Promise<ActionResponse<Question>> {
 
@@ -73,6 +79,15 @@ export async function createQuestion(params: CreateQuestionParams): Promise<Acti
             { $push: { tags: { $each: tagIds } } },
             { session}
         );
+
+        after(async () => {
+            await createInteraction({
+                action: "post",
+                actionId: question._id.toString(),
+                actionTarget: "question",
+                authorId: userId as string,
+            });
+        });
 
         await session.commitTransaction();
 
@@ -193,6 +208,58 @@ export async function editQuestion(params: EditQuestionParams): Promise<ActionRe
     }
 }
 
+export async function getRecommendedQuestions({userId, query, skip, limit}: RecommendationParams) {
+
+    const interactions = await DTOInteraction.find({
+        user: new Types.ObjectId(userId),
+        actionType: "question",
+        action: { $in: ["view", "upvote", "bookmark", "post"] },
+    })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
+
+    const interactedQuestionIds = interactions.map((i) => i.actionId);
+
+    const interactedQuestions = await DTOQuestion.find({
+        _id: { $in: interactedQuestionIds },
+    }).select("tags");
+
+    const allTags = interactedQuestions.flatMap((q) =>
+        q.tags.map((tag: Types.ObjectId) => tag.toString())
+    );
+
+    const uniqueTagIds = [...new Set(allTags)];
+
+    const recommendedQuery: FilterQuery<typeof DTOQuestion> = {
+        _id: { $nin: interactedQuestionIds },
+        author: { $ne: new Types.ObjectId(userId) },
+        tags: { $in: uniqueTagIds.map((id: string) => new Types.ObjectId(id)) },
+    };
+
+    if (query) {
+        recommendedQuery.$or = [
+            { title: { $regex: query, $options: "i" } },
+            { content: { $regex: query, $options: "i" } },
+        ];
+    }
+
+    const total = await DTOQuestion.countDocuments(recommendedQuery);
+
+    const questions = await DTOQuestion.find(recommendedQuery)
+        .populate("tags", "name")
+        .populate("author", "name image")
+        .sort({ upvotes: -1, views: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+    return {
+        questions: JSON.parse(JSON.stringify(questions)),
+        isNext: total > skip + questions.length,
+    };
+}
+
 export async function getQuestion(params: GetQuestionParams): Promise<ActionResponse<Question>> {
 
     const validationResult = await action({params, schema: GetQuestionSchema, authorize: true});
@@ -234,35 +301,54 @@ export async function getQuestions(params: PaginatedSearchParams): Promise<Actio
     const limit = Number(pageSize);
 
     const filterQuery: FilterQuery<typeof DTOQuestion> = {};
-
-    if(filter === "recommended") return { success: true, data: { questions: [], isNext: false }, status: 200 };
-
-    if(query) {
-        filterQuery.$or = [
-            { title: { $regex: new RegExp(query, 'i')} },
-            { content: { $regex: new RegExp(query, 'i')} },
-        ];
-    }
-
     let sortCriteria = {};
 
-    switch (filter) {
-        case "newest":
-            sortCriteria = { createdAt: -1 };
-            break;
-        case "unanswered":
-            filterQuery.answers = 0;
-            sortCriteria = { createdAt: -1 };
-            break;
-        case "popular":
-            sortCriteria = { upvotes: -1 };
-            break;
-        case "default":
-            sortCriteria = { createdAt: -1 };
-            break;
-    }
-
     try {
+
+        // Recommended
+        if(filter === "recommended") {
+            const session = await auth();
+            const userId = session?.user?.id;
+
+            if (!userId) {
+                return {success: true, data: {questions: [], isNext: false}, status: 200};
+            }
+
+            const recommended = await getRecommendedQuestions({
+                userId,
+                query,
+                skip,
+                limit,
+            });
+
+            return { success: true, data: recommended, status: 200 };
+        }
+
+        // Search
+        if(query) {
+            filterQuery.$or = [
+                { title: { $regex: new RegExp(query, 'i')} },
+                { content: { $regex: new RegExp(query, 'i')} },
+            ];
+        }
+
+        // Filters
+        switch (filter) {
+            case "newest":
+                sortCriteria = { createdAt: -1 };
+                break;
+            case "unanswered":
+                filterQuery.answers = 0;
+                sortCriteria = { createdAt: -1 };
+                break;
+            case "popular":
+                sortCriteria = { upvotes: -1 };
+                break;
+            case "default":
+                sortCriteria = { createdAt: -1 };
+                break;
+        }
+
         const totalQuestion = await DTOQuestion.countDocuments(filterQuery);
 
         const question = await DTOQuestion.find(filterQuery)
@@ -334,6 +420,95 @@ export async function getHotQuestions(): Promise<ActionResponse<Question[]>> {
 
     } catch (error) {
         return handleError(error) as ErrorResponse;
+    }
+
+}
+
+export async function deleteQuestion(params: DeleteQuestionParams): Promise<ActionResponse> {
+
+    const validatedResult = await action({
+        params,
+        schema: DeleteQuestionSchema,
+        authorize: true
+    });
+
+    if (validatedResult instanceof Error) {
+        return handleError(validatedResult) as ErrorResponse;
+    }
+
+    const { questionId } = validatedResult.params!;
+    const userId = validatedResult.session?.user?.id;
+
+    const session = await mongoose.startSession();
+
+    try {
+
+        session.startTransaction();
+
+        const question = await DTOQuestion.findById(questionId).session(session);
+        if (!question) throw new NotFoundError("Question");
+
+        if (question.author.toString() !== userId) {
+            throw new UnauthorizedError("You are not authorized to delete this question");
+        }
+
+        // Delete references from Collection
+        await DTOCollection.deleteMany({
+            question: questionId
+        }).session(session);
+
+        // Delete references from TagQuestion collection
+        await DTOTagQuestion.deleteMany({
+            question: questionId
+        }).session(session);
+
+        // For all tags of Question, find them and reduce their count
+        if (question.tags.length > 0) {
+            await DTOTag.updateMany(
+                { _id: { $in: question.tags } },
+                { $inc: { questions: -1 } },
+                { session }
+            )
+        }
+
+        // Remove all votes of the question
+        await DTOVote.deleteMany({
+            actionId: questionId,
+            actionType: "question"
+        }).session(session);
+
+        // Remove all answers and their votes of the question
+        const answers = await DTOAnswer.find({
+            question: questionId
+        }).session(session);
+
+        // Remove all answers, and remove all votes of the deleted answers
+        if (answers.length > 0) {
+            await DTOAnswer.deleteMany({ question: questionId }).session(session);
+
+            await DTOVote.deleteMany({
+                actionId: { $in: answers.map((answer) => answer.id) },
+                actionType: "answer",
+            }).session(session);
+        }
+
+        // Delete a question
+        await DTOQuestion.findByIdAndDelete(questionId).session(session);
+
+        await session.commitTransaction();
+
+        revalidatePath(ROUTES.PROFILE(userId!));
+
+        return {
+            success: true,
+            status: 200
+        }
+
+    } catch (error) {
+        await session.abortTransaction();
+        return handleError(error) as ErrorResponse;
+    } finally {
+        await session.endSession();
     }
 
 }

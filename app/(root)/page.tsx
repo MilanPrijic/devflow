@@ -10,10 +10,16 @@ import {EMPTY_QUESTION} from "@/constants/states";
 import CommonFilter from "@/components/filters/CommonFilter";
 import {HomePageFilters} from "@/constants/filters";
 import Pagination from "@/components/Pagination";
+import {Metadata} from "next";
 
 interface SearchParams {
     searchParams: Promise<{ [key: string]: string }>;
 }
+
+export const metadata: Metadata = {
+    title: "Dev Overflow | Home",
+    description: "Discover different programming questions and answers with recommendations from the community.",
+};
 
 const Home = async ({ searchParams }: SearchParams) => {
 

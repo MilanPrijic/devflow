@@ -2,12 +2,14 @@
 
 import mongoose from "mongoose";
 import action from "@/lib/handlers/action";
-import {AnswerServerSchema, GetAnswersSchema} from "@/lib/validaitons";
+import {AnswerServerSchema, DeleteAnswerSchema, GetAnswersSchema} from "@/lib/validaitons";
 import handleError from "@/lib/handlers/errors";
-import {DTOAnswer, DTOQuestion} from "@/database";
-import {NotFoundError} from "@/lib/http.errors";
+import {DTOAnswer, DTOQuestion, DTOVote} from "@/database";
+import {NotFoundError, UnauthorizedError} from "@/lib/http.errors";
 import {revalidatePath} from "next/cache";
 import ROUTES from "@/constants/routes";
+import {after} from "next/server";
+import {createInteraction} from "@/lib/actions/interaction.action";
 
 export async function createAnswer(params: CreateAnswerParams): Promise<ActionResponse<Answer>> {
 
@@ -45,6 +47,16 @@ export async function createAnswer(params: CreateAnswerParams): Promise<ActionRe
 
         question.answers += 1;
         await question.save({ question });
+
+        after(async () => {
+            await createInteraction({
+                action: "post",
+                actionId: newAnswer._id.toString(),
+                actionTarget: "answer",
+                authorId: userId as string,
+            });
+        });
+
         await session.commitTransaction();
 
         revalidatePath(ROUTES.QUESTION(questionId));
@@ -120,5 +132,67 @@ export async function getAnswers(params: GetAnswersParams): Promise<ActionRespon
         return handleError(error) as ErrorResponse;
     }
 
+
+}
+
+export async function deleteAnswer(params: DeleteAnswerParams): Promise<ActionResponse> {
+
+    const validatedResult = await action({
+        params,
+        schema: DeleteAnswerSchema,
+        authorize: true
+    });
+
+    if (validatedResult instanceof Error) {
+        return handleError(validatedResult) as ErrorResponse;
+    }
+
+    const { answerId } = validatedResult.params!;
+    const userId = validatedResult.session?.user?.id;
+
+    const session = await mongoose.startSession();
+
+    try {
+
+        session.startTransaction();
+
+        const answer = await DTOAnswer.findById(answerId).session(session);
+        if (!answer) throw new NotFoundError("Answer");
+
+        if (answer.author.toString() !== userId) {
+            throw new UnauthorizedError("You are not authorized to delete this answer");
+        }
+
+        // Decrease the answer count for the associated question
+        await DTOQuestion.findByIdAndUpdate(
+            answer.question,
+            { $inc: { answers: -1 } },
+            { session }
+        )
+
+        // Remove all votes of the answer
+        await DTOVote.deleteMany({
+            actionId: answerId,
+            actionType: "answer"
+        }).session(session);
+
+        // Delete the answer
+        await DTOAnswer.findByIdAndDelete(answerId).session(session);
+
+        await session.commitTransaction();
+
+        revalidatePath(ROUTES.PROFILE(userId!));
+
+        return {
+            success: true,
+            status: 200
+        }
+
+    } catch (error) {
+        await session.abortTransaction();
+        return handleError(error) as ErrorResponse;
+    } finally {
+        await session.endSession();
+    }
 
 }

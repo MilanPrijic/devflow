@@ -35,7 +35,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
         <html lang="en" suppressHydrationWarning>
             <head>
                 <link rel="stylesheet" type='text/css' href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css" />
-
+                <title>DevFlow</title>
             </head>
             <SessionProvider session={session}>
                 <body
