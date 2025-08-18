@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import {DefaultValues, FieldValues, Path, SubmitHandler, useForm} from "react-hook-form"
-import {z, ZodType} from "zod"
+import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "@/components/ui/form"
@@ -13,7 +13,7 @@ import {useRouter} from "next/navigation";
 import { toast } from "sonner";
 
 interface AuthFormProps<T extends FieldValues> {
-    schema: ZodType<T>,
+    schema: z.ZodTypeAny,
     defaultValues: T,
     onSubmit: (data: T) => Promise<ActionResponse>,
     formType: "SIGN_IN" | "SIGN_UP",

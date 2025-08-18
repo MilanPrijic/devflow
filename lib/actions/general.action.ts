@@ -8,7 +8,6 @@ import {GlobalSearchSchema} from "@/lib/validaitons";
 
 export async function globalSearch(params: GlobalSearchParams) {
     try {
-        console.log("QUERY", params);
 
         const validationResult = await action({
             params,
@@ -73,8 +72,6 @@ export async function globalSearch(params: GlobalSearchParams) {
                 id: type === "answer" ? item.question : item._id,
             }));
         }
-
-        console.log(results);
 
         return {
             success: true,

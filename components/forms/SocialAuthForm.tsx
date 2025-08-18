@@ -14,7 +14,7 @@ const SocialAuthForm = () => {
         try {
             await signIn(provider, {
                 redirectTo: ROUTES.HOME,
-                redirect: false,
+                redirect: true,
             });
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "An error occurred during sing-in");
