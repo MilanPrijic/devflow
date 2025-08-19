@@ -47,23 +47,28 @@ const Home = async ({ searchParams }: SearchParams) => {
 
             </section>
 
-            <div className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
-                <LocalSearch
-                    route="/"
-                    imgSrc="/icons/search.svg"
-                    placeholder="Search questions..."
-                    otherClasses="flex-1"
-                />
+            {Array.isArray(questions) && questions.length > 0 ? (
+                <>
+                    <div className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
+                        <LocalSearch
+                            route="/"
+                            imgSrc="/icons/search.svg"
+                            placeholder="Search questions..."
+                            otherClasses="flex-1"
+                        />
 
-                <CommonFilter
-                    filters={HomePageFilters}
-                    otherClasses="min-h-[56px] w-full sm:min-w-[170px]"
-                    containerClasses="hidden max-md:flex"
-                />
+                        <CommonFilter
+                            filters={HomePageFilters}
+                            otherClasses="min-h-[56px] w-full sm:min-w-[170px]"
+                            containerClasses="hidden max-md:flex"
+                        />
 
-            </div>
+                    </div>
 
-            <HomeFilter />
+
+                    <HomeFilter />
+                </>
+            ) : null}
 
             <DataRenderer
                 success={success}
@@ -79,7 +84,9 @@ const Home = async ({ searchParams }: SearchParams) => {
                 )}
             />
 
-            <Pagination page={page} isNext={isNext || false} />
+            {Array.isArray(questions) && questions.length > 0 ? (
+                <Pagination page={page} isNext={isNext || false} />
+            ) : null}
         </>
   );
 }

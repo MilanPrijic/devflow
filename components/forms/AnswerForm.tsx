@@ -72,13 +72,19 @@ const AnswerForm = ({ questionId, questionTitle, questionContent }: Props) => {
     };
 
     const generateAIAnswer = async () => {
+
         if(session.status != "authenticated") {
             return toast("You need to be logged in to use this feature!");
         }
 
-        setIsAISubmitting(true);
-
         const userAnswer = editorRef.current?.getMarkdown();
+        console.log(userAnswer);
+
+        if(!userAnswer || userAnswer.length < 100) {
+            return toast.error("AI can only enhance and improve your answer. Please write at least 100 character's long answer before enhancing with AI!");
+        }
+
+        setIsAISubmitting(true);
 
         try {
 
@@ -126,7 +132,7 @@ const AnswerForm = ({ questionId, questionTitle, questionContent }: Props) => {
                                 height={12}
                                 className="object-contain"
                             />{" "}
-                            Generate AI Answer
+                            Enhance Answer with AI
                         </>
                     )}
                 </Button>

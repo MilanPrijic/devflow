@@ -58,8 +58,11 @@ const Collections = async ({ searchParams }: SearchParams) => {
                 )}
             />
 
-            <Pagination page={page} isNext={isNext || false} />
-        </>
+            {Array.isArray(collection) && collection.length > 0 ? (
+                <Pagination page={page} isNext={isNext || false} />
+            ) : null}
+
+            </>
     );
 }
 

@@ -35,7 +35,7 @@ import {forwardRef, Ref} from "react";
 
 interface Props {
     value: string;
-    editorRef: Ref<MDXEditorMethods> | null;
+    ref: Ref<MDXEditorMethods> | null;
     fieldChange: (value: string) => void;
 }
 

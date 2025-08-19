@@ -55,7 +55,9 @@ const TagDetails = async ({ params, searchParams }: RouteParams) => {
                 )}
             />
 
-            <Pagination page={page} isNext={isNext || false} />
+            {Array.isArray(questions) && questions.length > 0 ? (
+                <Pagination page={page} isNext={isNext || false} />
+            ) : null}
 
         </>
     )

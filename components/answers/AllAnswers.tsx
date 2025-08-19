@@ -36,7 +36,9 @@ const AllAnswers = ({ page, isNext, data, success, error, totalAnswers }: Props)
                 }
             />
 
-            <Pagination page={page} isNext={isNext || false} />
+            {totalAnswers !== 0 ? (
+                <Pagination page={page} isNext={isNext || false} />
+            ) : null}
 
         </div>
     )

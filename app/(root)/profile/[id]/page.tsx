@@ -132,7 +132,7 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
                 reputationPoints={user.reputation || 0}
             />
 
-            <section className="mt-10 flex gap-10">
+            <section className="my-10 flex gap-10">
                 <Tabs defaultValue="top-posts" className="flex-[2]">
                     <TabsList className="background-light800_dark400 min-h-[42px] p-1">
                         <TabsTrigger value="top-posts" className="tab">Top Posts</TabsTrigger>
@@ -157,7 +157,10 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
                             }
                         />
 
-                        <Pagination page={page} isNext={hasMoreQuestions} />
+                        {Array.isArray(questions) && questions.length > 0 ? (
+                            <Pagination page={page} isNext={hasMoreQuestions} />
+                        ) : null}
+
                     </TabsContent>
                     <TabsContent value="answers" className="flex w-full flex-col gap-6">
                         <DataRenderer
@@ -181,7 +184,10 @@ const Profile = async ({ params, searchParams }: RouteParams) => {
                             }
                         />
 
-                        <Pagination page={page} isNext={hasMoreAnswers} />
+                        {Array.isArray(answers) && answers.length > 0 ? (
+                            <Pagination page={page} isNext={hasMoreAnswers} />
+                        ) : null}
+
                     </TabsContent>
                 </Tabs>
 
