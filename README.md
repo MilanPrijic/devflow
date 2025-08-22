@@ -29,6 +29,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 - shadcn/ui: UI components built on Radix and Tailwind
 - react-hook-form: Form state management
 - zod: TypeScript-first schema validation
+- google/github auth: social login/registration
 - next-auth: Authentication for Next.js apps
 - MongoDB
 - mongoose: MongoDB object modeling
